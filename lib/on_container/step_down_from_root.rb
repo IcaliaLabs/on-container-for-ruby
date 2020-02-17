@@ -26,11 +26,11 @@ module OnContainer
     end
 
     def developer_uid?
-      developer_uid_as_integer > 0
+      developer_uid > 0
     end
 
     def developer_uid
-      @developer_uid ||= ENV['DEVELOPER_UID'].to_i
+      @developer_uid ||= ENV.fetch('DEVELOPER_UID', '').to_i
     end
 
     protected
@@ -38,7 +38,7 @@ module OnContainer
     def switch_to_developer_user
       target_user_name = target_user.name
       puts "Switching from 'root' user to '#{target_user_name}'..."
-      exec 'su-exec', target_user_name, $0, *$*
+      Kernel.exec 'su-exec', target_user_name, $0, *$*
     end
 
     def warn_no_developer_uid
