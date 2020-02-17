@@ -4,8 +4,8 @@ WORKDIR /usr/src
 
 ENV HOME=/usr/src PATH=/usr/src/bin:$PATH
 
-COPY Gemfile Gemfile.lock omniauth-icalia.gemspec /usr/src/
-COPY lib/omniauth-icalia/version.rb /usr/src/lib/omniauth-icalia/
+COPY Gemfile Gemfile.lock on_container.gemspec /usr/src/
+COPY lib/on_container/version.rb /usr/src/lib/on_container/
 
 RUN bundle install --jobs=4 --retry=3
 

@@ -49,7 +49,7 @@ blocks:
             - ci-compose run test rake spec
             
             # Build the gem
-            - ci-compose run test gem build omniauth-icalia
+            - ci-compose run test gem build on_container
 
 promotions:
   - name: Publish

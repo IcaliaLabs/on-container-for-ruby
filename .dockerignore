@@ -45,4 +45,4 @@ coverage/*
 /tmp
 
 # Ignore packed gems:
-omniauth-icalia-*.gem
+on_container-*.gem

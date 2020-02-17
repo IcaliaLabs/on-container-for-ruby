@@ -5,7 +5,7 @@ volumes:
 
 services:
   lib:
-    image: icalialabs/omniauth-icalia:development
+    image: icalialabs/on_container:development
     build:
       context: .
       target: development
