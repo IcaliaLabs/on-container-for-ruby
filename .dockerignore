@@ -38,7 +38,7 @@ coverage/*
 .reek
 .scss-lint.yml
 
-examples.txt
+.rspec_status
 
 **/.gem
 /.semaphore
