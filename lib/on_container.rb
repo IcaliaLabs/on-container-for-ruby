@@ -1,4 +1,4 @@
-require "on_container/version"
+require 'on_container/version'
 
 module OnContainer
   class Error < StandardError; end
