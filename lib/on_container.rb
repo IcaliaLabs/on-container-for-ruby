@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'on_container/version'
 
 module OnContainer
