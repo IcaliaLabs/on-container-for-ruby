@@ -7,5 +7,11 @@
 /spec/reports/
 /tmp/
 
+# Ignore OS artifacts:
+**/.DS_Store
+
 # rspec failure tracking
 .rspec_status
+
+# Ignore histroy files
+**/.*_hist*

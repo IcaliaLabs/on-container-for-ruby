@@ -46,3 +46,6 @@ coverage/*
 
 # Ignore packed gems:
 on_container-*.gem
+
+# Ignore histroy files
+**/.*_hist*
