@@ -1,0 +1,20 @@
+version: '3.7'
+
+volumes:
+  lib_gem_bundle:
+
+services:
+  lib:
+    image: icalialabs/omniauth-icalia:development
+    build:
+      context: .
+      target: development
+      args:
+        DEVELOPER_UID: ${UID:-1000}
+        DEVELOPER_USERNAME: ${USER:-you}
+    command: bundle console
+    volumes:
+      - .:/usr/src
+      - lib_gem_bundle:/usr/local/bundle
+    environment:
+      BUNDLE_CONSOLE: pry

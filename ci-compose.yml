@@ -1,0 +1,25 @@
+# We'll use the '3.x spec since it supports the 'cache_from'
+# option:
+version: '3.7'
+
+services:
+  test: &lib
+    image: icalia-labs.registry-beta.semaphoreci.com/icalialabs/omniauth-icalia:testing-${GIT_COMMIT_SHORT_SHA:-latest}
+    build:
+      target: testing
+      context: .
+      cache_from:
+        # Since docker-compose will try to build the unused (at this time)
+        # runtime stage, and this project's dev stages and runtime stages start
+        # from different images, we need to include the releaseable image here
+        # as well - this may change with Docker 19.x:
+        - icalia-labs.registry-beta.semaphoreci.com/icalialabs/omniauth-icalia:testing-${GIT_COMMIT_SHORT_SHA:-latest}
+        - icalia-labs.registry-beta.semaphoreci.com/icalialabs/omniauth-icalia:testing-${TAG_SAFE_BRANCH}
+        - icalia-labs.registry-beta.semaphoreci.com/icalialabs/omniauth-icalia:testing
+  
+  release:
+    <<: *lib
+    command: rake release
+    volumes:
+      - .:/usr/src
+      - ${HOME}/.gem/credentials:/root/.gem/credentials

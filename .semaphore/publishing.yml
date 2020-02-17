@@ -1,0 +1,43 @@
+version: v1.0
+
+name: Publishing
+
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+
+global_job_config:
+  secrets:
+    - name: icalia-labs-semaphore-registry
+    - name: ICALIA_RUBYGEMS
+  prologue:
+    commands:
+      - checkout
+
+      # Correct the permissions on rubygems credentials:
+      - chmod 0600 /home/semaphore/.gem/credentials
+
+      # Add the scripts for CI to the PATH:
+      - export PATH=$(pwd)/.semaphore/bin:${PATH}
+
+      # Generate the dotenv file:
+      - generate-dotenv-file > .env
+
+      # Alias docker-compose commands as 'ci-compose':
+      - alias ci-compose="docker-compose --file docker-compose.yml --file ci-compose.yml"
+
+      # Log in to Semaphore CI Docker Registry:
+      - docker login -u "$SEMAPHORE_REGISTRY_USERNAME" -p "$SEMAPHORE_REGISTRY_PASSWORD" https://icalia-labs.registry-beta.semaphoreci.com
+
+      # Pull the images referenced in the 'cache_from' key:
+      - docker-image-manager download-cache test
+
+blocks:
+  - name: Publish omniauth-icalia
+    task:
+      jobs:
+        - name: Publish to Rubygems
+          commands:
+            # Build & publish the gem
+            - ci-compose run release

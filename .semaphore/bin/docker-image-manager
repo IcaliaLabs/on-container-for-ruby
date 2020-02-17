@@ -1,0 +1,161 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Y yo pelándomela con bash...
+
+def load_env
+  File.read('.env').each_line do |line|
+    variable_name, variable_value = line.match(/\A(\w+)=(\S*)/).captures
+    next if variable_name.nil?
+    ENV[variable_name] = variable_value
+  end
+end
+
+def main_image
+  @main_image ||= @config.dig 'services', @service_name, 'image'
+end
+
+def image_repo
+  @image_repo ||= image_and_tag(main_image).first
+end
+
+def image_and_tag(image)
+  image.match(/\A(\S+):(\S*)\z/).captures
+end
+
+def pull(image)
+  system('docker', 'pull', image, out: $stdout, err: :out)
+end
+
+def pull_main_image
+  pull main_image
+end
+
+def sorted_cache_images
+  unsorted_images = @config
+    .dig('services', @service_name, 'build', 'cache_from')
+    .reject { |image| image == main_image }
+    .uniq
+
+  # With priority:
+  sorted_images = []
+
+  # 1: Testing of commit:
+  sorted_images << unsorted_images.detect do |image|
+    image == "#{image_repo}:testing-#{ENV['GIT_COMMIT_SHORT_SHA']}"
+  end
+
+  # 2: Builder of branch:
+  sorted_images << unsorted_images.detect do |image|
+    image == "#{image_repo}:builder-#{ENV['TAG_SAFE_BRANCH']}"
+  end
+
+  # 3: Testing of branch:
+  sorted_images << unsorted_images.detect do |image|
+    image == "#{image_repo}:testing-#{ENV['TAG_SAFE_BRANCH']}"
+  end
+
+  # 4: Builder of master branch:
+  sorted_images << unsorted_images.detect do |image|
+    image == "#{image_repo}:builder"
+  end
+
+  # 5: Testing of master branch:
+  sorted_images << unsorted_images.detect do |image|
+    image == "#{image_repo}:testing"
+  end
+
+  (sorted_images + (unsorted_images - sorted_images))
+    .reject { |image| "#{image}" == '' }
+end
+
+def pull_cache_images
+  repo_image_pulled = false
+  sorted_cache_images.each do |image|
+    is_repo_image = image.start_with?(image_repo)
+    next if is_repo_image && repo_image_pulled
+    repo_image_pulled = pull(image) && is_repo_image
+  end
+end
+
+def push(image)
+  system 'docker', 'push', image, out: $stdout, err: :out
+end
+
+def tag(source_image, target_image)
+  system 'docker', 'tag', source_image, target_image, out: $stdout, err: :out
+end
+
+def tag_and_push_branch
+  branch_image = main_image
+    .gsub(ENV['GIT_COMMIT_SHORT_SHA'], ENV['TAG_SAFE_BRANCH'])
+
+  branch_image = branch_image[0..-8] if branch_image =~ /:(\w+)-master\z/
+
+  tag main_image, branch_image
+  push branch_image
+end
+
+def tag_and_push_latest
+  # We'll only tag 'testing', 'builder' or 'latest' if we're on master:
+  return unless ENV['TAG_SAFE_BRANCH'] == 'master'
+
+  latest_image = main_image.gsub(ENV['GIT_COMMIT_SHORT_SHA'], '')
+
+  if latest_image.end_with?('-')
+    # It's either a 'builder' or 'testing' tag:
+    latest_image = latest_image[0..-2]
+  elsif latest_image.end_with?(':')
+    # It's neither a 'builder' or 'testing' tag:
+    latest_image = "#{latest_image}latest"
+  end
+
+  tag main_image, latest_image
+  push latest_image
+end
+
+def push_images
+  push main_image
+  tag_and_push_branch
+  tag_and_push_latest
+end
+
+@command = ARGV[0]
+unless %w[download-cache tag-and-push].include?(@command)
+  puts "Command '#{@command}' not recognized"
+  exit 1
+end
+
+@service_name = ARGV[1]
+if "#{@service_name}" == ''
+  puts "No service name given"
+  exit 1
+end
+
+@config ||= begin
+  require 'yaml'
+  config_str = %x[docker-compose --file docker-compose.yml --file ci-compose.yml config]
+  YAML.load config_str
+rescue
+  puts config_str
+  exit 1
+end  
+
+if "#{@service_name}" == ''
+  puts "No service name given"
+  exit 1
+end
+
+if @config.dig('services', @service_name).nil?
+  puts "No service '#{@service_name}' exists in config"
+  exit 1
+end
+
+load_env
+
+case @command
+when 'download-cache'
+  pull_main_image || pull_cache_images
+when 'tag-and-push'
+  push_images
+end

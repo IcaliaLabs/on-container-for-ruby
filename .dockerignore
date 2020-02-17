@@ -1,0 +1,48 @@
+# Ignore docker and environment files:
+*Dockerfile*
+docker-compose*.yml
+ci-compose.yml
+**/*.env
+.dockerignore
+
+# Ignore Git repositories:
+**/.git
+
+# Ignore temporary files:
+**/tmp/
+
+# Ignore OS artifacts:
+**/.DS_Store
+
+# 3: Ignore Development container's Home artifacts:
+# 3.1: Ignore bash / IRB / Byebug history files
+.*_hist*
+
+# 3.3: bundler stuff
+.bundle/*
+
+# 3.4: Codeclimate stuff:
+.codeclimate.yml
+.csslintrc
+.eslintignore
+.eslintrc
+.rubocop.yml
+coffeelint.json
+
+# Ignore test coverage reports:
+coverage/*
+
+# Ignore auto-downloadable codeclimate plugin configuration files:
+.rubocop.yml
+.rubocop-rails.yml
+.reek
+.scss-lint.yml
+
+examples.txt
+
+**/.gem
+/.semaphore
+/tmp
+
+# Ignore packed gems:
+omniauth-icalia-*.gem

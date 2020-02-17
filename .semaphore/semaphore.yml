@@ -1,0 +1,60 @@
+version: v1.0
+
+name: 'Test & Build'
+
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+
+auto_cancel:
+  running:
+    when: "branch != 'master'"
+
+global_job_config:
+  secrets:
+    - name: icalia-labs-semaphore-registry
+  prologue:
+    commands:
+      # Checkout the code:
+      - checkout
+
+      # Add the scripts for CI to the PATH:
+      - export PATH=$(pwd)/.semaphore/bin:${PATH}
+
+      # Generate the dotenv file:
+      - generate-dotenv-file > .env
+
+      # Alias docker-compose commands as 'ci-compose':
+      - alias ci-compose="docker-compose --file docker-compose.yml --file ci-compose.yml"
+
+      # Log in to Semaphore CI Docker Registry:
+      - docker login -u "$SEMAPHORE_REGISTRY_USERNAME" -p "$SEMAPHORE_REGISTRY_PASSWORD" https://icalia-labs.registry-beta.semaphoreci.com
+
+blocks:
+  - name: Run Tests
+    task:
+      jobs:
+        - name: Testing
+          commands:
+            # Pull the images referenced in the 'cache_from' key:
+            - docker-image-manager download-cache test
+
+            # Build the test image:
+            - ci-compose build --pull test
+
+            # Tag & Push test image so we can use it on image cache:
+            - docker-image-manager tag-and-push test
+            
+            - ci-compose run test rake spec
+            
+            # Build the gem
+            - ci-compose run test gem build omniauth-icalia
+
+promotions:
+  - name: Publish
+    pipeline_file: publishing.yml
+    auto_promote_on:
+      - result: passed
+        branch:
+          - ^refs\/tags\/v(\d+)\.(\d+)\.(\d+)(\.rc\d+)?$
