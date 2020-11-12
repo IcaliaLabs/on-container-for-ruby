@@ -2,7 +2,7 @@
 
 module OnContainer
   module BundlerOps
-    def ensure_gem_dependencies_are_met
+    def ensure_project_gems_are_installed
       system 'bundle check || bundle install'
     end
   end
