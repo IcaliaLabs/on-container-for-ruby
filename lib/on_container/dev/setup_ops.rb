@@ -10,7 +10,7 @@ module OnContainer
       def app_setup_lock_path; "#{app_temp_path}/setup.lock"; end
   
       def lock_setup
-        system "mkdir -p #{APP_TEMP_PATH} && touch #{APP_SETUP_LOCK};"
+        system "mkdir -p #{app_temp_path} && touch #{app_setup_lock_path};"
       end
       
       def unlock_setup
