@@ -14,16 +14,16 @@ module OnContainer
       end
       
       def unlock_setup
-        system "rm -rf #{APP_SETUP_LOCK}"
+        system "rm -rf #{app_setup_lock_path}"
       end
       
       def wait_setup
         puts 'Waiting for app setup to finish...'
-        sleep APP_SETUP_WAIT
+        sleep app_setup_wait
       end
       
       def on_setup_lock_acquired
-        wait_setup while File.exist?(APP_SETUP_LOCK)
+        wait_setup while File.exist?(app_setup_lock_path)
       
         lock_setup
         yield
