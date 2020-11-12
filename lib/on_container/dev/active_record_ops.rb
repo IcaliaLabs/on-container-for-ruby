@@ -8,7 +8,7 @@ module OnContainer
         ENV.fetch('APP_SETUP_WAIT', '5').to_i
       end
 
-      def parse_database_config_file
+      def parse_activerecord_config_file
         require 'erb'
         require 'yaml'
 
@@ -20,12 +20,12 @@ module OnContainer
         Hash.new(shared).merge(loaded_yaml)
       end
       
-      def database_config
-        @database_config ||= parse_database_config_file 
+      def activerecord_config
+        @activerecord_config ||= parse_activerecord_config_file 
           .fetch ENV.fetch('RAILS_ENV', 'development')
       end
       
-      def establish_database_connection
+      def establish_activerecord_database_connection
         unless defined?(ActiveRecord)
           require 'rubygems'
           require 'bundler'
@@ -35,21 +35,21 @@ module OnContainer
           require 'active_record'
         end
 
-        ActiveRecord::Base.establish_connection database_config
+        ActiveRecord::Base.establish_connection activerecord_config
         ActiveRecord::Base.connection_pool.with_connection { |connection| }
       end
       
-      def database_initialized?
+      def activerecord_database_initialized?
         ActiveRecord::Base.connection_pool.with_connection do |connection|
           connection.data_source_exists? :schema_migrations
         end
       end
       
-      def database_ready?
+      def activerecord_database_ready?
         connection_tries ||= 3
 
-        establish_database_connection
-        database_initialized?
+        establish_activerecord_database_connection
+        activerecord_database_initialized?
       
       rescue PG::ConnectionBad
         unless (connection_tries -= 1).zero?
@@ -63,7 +63,7 @@ module OnContainer
         false
       end
       
-      def setup_database
+      def setup_activerecord_database
         system 'rails db:setup'
       end
     end
