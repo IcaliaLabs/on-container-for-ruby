@@ -29,6 +29,12 @@ module OnContainer
         yield
         unlock_setup
       end
+
+      def command_requires_setup?
+        %w[
+          rails rspec sidekiq hutch puma rake webpack webpack-dev-server
+        ].include?(ARGV[0])
+      end
     end
   end
 end
