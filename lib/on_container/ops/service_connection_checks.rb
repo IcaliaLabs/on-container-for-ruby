@@ -12,6 +12,8 @@ module OnContainer
 
         Timeout::timeout(seconds_to_wait) do
           TCPSocket.new(uri.host, uri.port).close
+        rescue Errno::ECONNREFUSED
+          retry
         end
 
         true
