@@ -27,6 +27,8 @@ module OnContainer
       
         lock_setup
         yield
+
+      ensure
         unlock_setup
       end
 
