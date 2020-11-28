@@ -26,15 +26,7 @@ module OnContainer
       end
       
       def establish_activerecord_database_connection
-        unless defined?(ActiveRecord)
-          require 'rubygems'
-          require 'bundler'
-
-          Bundler.setup(:default)
-
-          require 'active_record'
-        end
-
+        require 'active_record' unless defined?(ActiveRecord)
         ActiveRecord::Base.establish_connection activerecord_config
         ActiveRecord::Base.connection_pool.with_connection { |connection| }
       end
