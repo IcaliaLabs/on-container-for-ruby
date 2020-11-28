@@ -14,6 +14,6 @@ include OnContainer::Dev::NodeModulesOps
 include OnContainer::Dev::ActiveRecordOps
 include OnContainer::Dev::ContainerCommandOps
 
-require 'on_container/ops/service_connections'
+require 'on_container/ops/service_connection_checks'
 
-include OnContainer::Ops::ServiceConnection
+include OnContainer::Ops::ServiceConnectionChecks

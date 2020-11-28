@@ -6,7 +6,7 @@ require 'uri'
 
 module OnContainer
   module Ops
-    module ServiceConnection
+    module ServiceConnectionChecks
       def service_accepts_connections?(service_uri, seconds_to_wait = 30)
         uri = URI(service_uri)
 
