@@ -21,11 +21,16 @@ module OnContainer
         puts 'Waiting for app setup to finish...'
         sleep app_setup_wait
       end
-      
+
       def on_setup_lock_acquired
         wait_setup while File.exist?(app_setup_lock_path)
-      
+
         lock_setup
+
+        %w[HUP INT QUIT TERM EXIT].each do |signal_string|
+          Signal.trap(signal_string) { unlock_setup }
+        end
+
         yield
 
       ensure
