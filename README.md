@@ -22,7 +22,71 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### Development Routines & Docker Entrypoint Scripts
+
+We use some routines included in this gem to create compelling development entrypoint scripts for docker development containers.
+
+In this example, we'll be using the `on_container/dev/rails` routine bundle to create our dev entrypoint:
+
+```ruby
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+require 'on_container/dev/rails'
+
+set_given_or_default_command
+
+# `on_setup_lock_acquired` prevents multiple app containers from running
+# the setup process concurrently:
+on_setup_lock_acquired do
+  ensure_project_gems_are_installed
+  ensure_project_node_packages_are_installed
+
+  wait_for_service_to_accept_connections 'tcp://postgres:5432'
+  setup_activerecord_database unless activerecord_database_ready?
+
+  remove_rails_pidfile if rails_server?
+end if command_requires_setup?
+
+execute_given_or_default_command
+```
+
+### Loading secrets into environment variables, and inserting credentials into URL environment variables
+
+When using Docker Swarm, the secrets are loaded as files mounted into the container's filesystem.
+
+The `on_container/load_env_secrets` runs a couple of routines that reads these files into environment variables.
+
+For our Rails example app, we added the following line to the `config/boot.rb` file:
+
+```ruby
+# frozen_string_literal: true
+
+ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
+
+require 'on_container/load_env_secrets' # Load secrets injected by Kubernetes/Swarm
+
+require 'bundler/setup' # Set up gems listed in the Gemfile.
+require 'bootsnap/setup' # Speed up boot time by caching expensive operations.
+```
+
+The `on_container/load_env_secrets` also merges any credential available in environment variables into any matching
+`_URL` environment variable. For example, consider the following environment variables:
+
+```shell
+DATABASE_URL=postgres://postgres:5432/?encoding=unicode
+DATABASE_USER=postgres
+DATABASE_PASS=3x4mpl3P455w0rd
+```
+
+The routine will merge `DATABASE_USER` and `DATABASE_PASS` into `DATABASE_URL`:
+
+```ruby
+puts ENV['DATABASE_URL']
+> postgres://postgres:3x4mpl3P455w0rd@postgres:5432/?encoding=unicode
+```
+
 
 ## Development
 
