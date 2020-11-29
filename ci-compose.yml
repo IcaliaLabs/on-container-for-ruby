@@ -4,7 +4,7 @@ version: '3.7'
 
 services:
   tests: &lib
-    image: docker.pkg.github.com/${GITHUB_REPOSITORY}/main:testing-${GIT_COMMIT_SHORT_SHA}
+    image: ${DOCKER_NAMESPACE:-icalialabs}/on-container-for-ruby:testing-${GIT_COMMIT_SHORT_SHA}
     build: &lib_build
       target: testing
       context: .
@@ -13,16 +13,16 @@ services:
         DEVELOPER_UID: ${UID:-1000} # Keep in mind, most CI/CD environments will have this variable unset!
         DEVELOPER_USERNAME: ${USER:-you}
       cache_from:
-        - docker.pkg.github.com/${GITHUB_REPOSITORY}/main:testing-${GIT_COMMIT_SHORT_SHA}
-        - docker.pkg.github.com/${GITHUB_REPOSITORY}/main:testing-${TAG_SAFE_BRANCH}
-        - docker.pkg.github.com/${GITHUB_REPOSITORY}/main:testing
+        - ${DOCKER_NAMESPACE:-icalialabs}/on-container-for-ruby:testing-${GIT_COMMIT_SHORT_SHA}
+        - ${DOCKER_NAMESPACE:-icalialabs}/on-container-for-ruby:testing-${TAG_SAFE_BRANCH}
+        - ${DOCKER_NAMESPACE:-icalialabs}/on-container-for-ruby:testing
     command: rake spec
     volumes:
       - .:${PWD:-/code/on-container}
 
   release:
     <<: *lib
-    image: docker.pkg.github.com/${GITHUB_REPOSITORY}/main:${GIT_COMMIT_SHORT_SHA}
+    image: ${DOCKER_NAMESPACE:-icalialabs}/on-container-for-ruby:${GIT_COMMIT_SHORT_SHA}
     build:
       <<: *lib_build
       target: builder

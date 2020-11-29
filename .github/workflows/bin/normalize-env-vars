@@ -13,9 +13,13 @@ build_date = Time.now.strftime('%Y-%m-%dT%H:%M:%S%z')
 
 # See https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
 
+github_repository = ENV.fetch('GITHUB_REPOSITORY')
+github_docker_pkg_namespace = "docker.pkg.github.com/#{github_repository}".downcase
+
 puts "BUILD_DATE=#{build_date}"
 puts "GIT_COMMIT_SHA=#{git_sha}"
 puts "GIT_COMMIT_SHORT_SHA=#{git_short_sha}"
 puts "GIT_BRANCH=#{git_branch}"
 puts "TAG_SAFE_BRANCH=#{docker_tag_name_from_branch}"
 puts "UID=#{Etc.getpwuid.uid}"
+puts "DOCKER_NAMESPACE=#{github_docker_pkg_namespace}"
