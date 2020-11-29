@@ -2,8 +2,8 @@
 # This stage will contain the minimal dependencies for the CI/CD environment to
 # run the test suite:
 
-# Use the official Ruby 2.6.5 alpine image as base:
-FROM ruby:2.6.5-alpine AS testing
+# Use the official Ruby 2.7.2 alpine image as base:
+FROM ruby:2.7.2-alpine AS testing
 
 # Install the app build system dependency packages:
 RUN apk add --no-cache alpine-sdk git
