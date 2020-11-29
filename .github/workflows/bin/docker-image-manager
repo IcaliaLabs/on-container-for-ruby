@@ -5,10 +5,6 @@ def main_image
   @main_image ||= @config.dig 'services', @service_name, 'image'
 end
 
-def image_repo
-  @image_repo ||= image_and_tag(main_image).first
-end
-
 def image_and_tag(image)
   image.match(/\A(\S+):(\S*)\z/).captures
 end
@@ -23,14 +19,7 @@ def service_image_cache_list(service_name)
 end
 
 def pull_cache_images
-  repo_image_pulled = false
-
-  service_image_cache_list(@service_name).each do |image|
-    is_repo_image = image.start_with?(image_repo)
-    next if is_repo_image && repo_image_pulled
-
-    repo_image_pulled = pull(image) && is_repo_image
-  end
+  service_image_cache_list(@service_name).each { |image| pull(image) }
 end
 
 def push(image)
@@ -75,6 +64,10 @@ def push_images
   tag_and_push_latest
 end
 
+def ci_compose
+  'docker-compose -f docker-compose.yml -f ci-compose.yml'
+end
+
 @command = ARGV[0]
 unless %w[download-cache tag-and-push].include?(@command)
   puts "Command '#{@command}' not recognized"
@@ -90,7 +83,7 @@ end
 @config ||= begin
   require 'yaml'
 
-  config = YAML.load %x[envsubst < ci-compose.yml]
+  config = YAML.load %x[#{ci_compose} config]
 rescue
   puts config
   exit 1
