@@ -91,6 +91,8 @@ end
   require 'yaml'
 
   config = YAML.load %x[envsubst < ci-compose.yml]
+  puts config
+  config
 rescue
   puts config
   exit 1
