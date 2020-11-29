@@ -5,10 +5,10 @@ version: '3.7'
 services:
   tests: &lib
     image: ${DOCKER_NAMESPACE:-icalialabs}/on-container-for-ruby:testing-${GIT_COMMIT_SHORT_SHA}
-    build: &lib_build
+    build:
       target: testing
       context: .
-      args: &app_build_args
+      args:
         CODE_PATH: ${PWD:-/code/on-container}
         DEVELOPER_UID: ${UID:-1000} # Keep in mind, most CI/CD environments will have this variable unset!
         DEVELOPER_USERNAME: ${USER:-you}
@@ -20,13 +20,12 @@ services:
     volumes:
       - .:${PWD:-/code/on-container}
 
+  builder:
+    <<: *lib
+    command: rake build
+
   release:
     <<: *lib
-    image: ${DOCKER_NAMESPACE:-icalialabs}/on-container-for-ruby:${GIT_COMMIT_SHORT_SHA}
-    build:
-      <<: *lib_build
-      target: builder
     command: rake release
-    volumes: []
     environment:
       GEM_HOST_API_KEY: ${GEM_HOST_API_KEY}

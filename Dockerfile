@@ -2,8 +2,8 @@
 # This stage will contain the minimal dependencies for the CI/CD environment to
 # run the test suite:
 
-# Use the official Ruby 2.6.5 alpine image as base:
-FROM ruby:2.6.5-alpine AS testing
+# Use the official Ruby 2.7.2 alpine image as base:
+FROM ruby:2.7.2-alpine AS testing
 
 # Install the app build system dependency packages:
 RUN apk add --no-cache alpine-sdk git
@@ -72,23 +72,3 @@ USER ${DEVELOPER_USERNAME}
 # "development" gems - We'll need to delete the bundler config, as it currently
 # belongs to "root":
 RUN bundle install --jobs=4 --retry=3 --with="development"
-
-# Stage 3: Builder =============================================================
-# In this stage we'll build the gem
-
-# Use the "testing" stage as base:
-FROM testing AS builder
-
-# Receive the developer username - note that ARGS won't persist between stages
-# on non-buildkit builds:
-ARG DEVELOPER_USERNAME=you
-
-# Receive the app path as an argument - note that ARGS are not persisted between
-# stages on non-buildkit builds
-ARG CODE_PATH=/code/on-container
-
-# Copy the full contents of the project:
-COPY --chown=${DEVELOPER_USERNAME} . ${CODE_PATH}/
-
-# Smoke Test - Build the gem:
-RUN rake build
