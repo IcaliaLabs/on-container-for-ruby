@@ -26,6 +26,6 @@ services:
 
   release:
     <<: *lib
-    command: rake release --trace
+    command: rake release
     environment:
       GEM_HOST_API_KEY: ${GEM_HOST_API_KEY}
