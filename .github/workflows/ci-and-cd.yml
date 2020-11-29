@@ -12,6 +12,12 @@ on:
   release:
     types: [published]
 
+env:
+  # Configures docker-compose to use Docker CLI to build the image:
+  COMPOSE_DOCKER_CLI_BUILD: 1
+  # Configures Docker CLI to use BuildKit to build the image:
+  DOCKER_BUILDKIT: 1
+
 jobs:
   test_build:
     name: Build Test Image
@@ -39,11 +45,6 @@ jobs:
 
       - name: Build Test Image
         run: ci-compose build --pull --build-arg BUILDKIT_INLINE_CACHE=1 tests
-        env:
-          # Configures docker-compose to use Docker CLI to build the image:
-          COMPOSE_DOCKER_CLI_BUILD: 1
-          # Configures Docker CLI to use BuildKit to build the image:
-          DOCKER_BUILDKIT: 1
 
       - name: Push Test Image
         run: docker-image-manager tag-and-push tests
@@ -110,6 +111,8 @@ jobs:
     needs: [testing, release_build]
     if: github.ref == 'refs/pull/9/merge'
     # if: github.event_name == 'release'
+    env:
+      GEM_HOST_API_KEY: ${{ secrets.ICALIALABS_GEM_HOST_API_KEY }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v1
@@ -128,10 +131,12 @@ jobs:
       - name: Login to Github Package Registry for Docker
         run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check ci-compose config
+        run: ci-compose config
+
       - name: Download image cache for "release"
         run: docker-image-manager download-cache release
 
       - name: Publish release to rubygems
         run: ci-compose run release
-        env:
-          GEM_HOST_API_KEY: ${{ secrets.ICALIALABS_GEM_HOST_API_KEY }}
+        
