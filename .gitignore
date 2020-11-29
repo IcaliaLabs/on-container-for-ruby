@@ -15,3 +15,7 @@
 
 # Ignore histroy files
 **/.*_hist*
+
+# Ignore dotenv files:
+**/*.env
+!**/*example*.env

@@ -3,23 +3,30 @@
 version: '3.7'
 
 services:
-  test: &lib
-    image: icalia-labs.registry-beta.semaphoreci.com/icalialabs/on_container:testing-${GIT_COMMIT_SHORT_SHA:-latest}
-    build:
+  tests: &lib
+    image: docker.pkg.github.com/${GITHUB_REPOSITORY}/main:testing-${GIT_COMMIT_SHORT_SHA}
+    build: &lib_build
       target: testing
       context: .
+      args: &app_build_args
+        CODE_PATH: ${PWD:-/code/on-container}
+        DEVELOPER_UID: ${UID:-1000} # Keep in mind, most CI/CD environments will have this variable unset!
+        DEVELOPER_USERNAME: ${USER:-you}
       cache_from:
-        # Since docker-compose will try to build the unused (at this time)
-        # runtime stage, and this project's dev stages and runtime stages start
-        # from different images, we need to include the releaseable image here
-        # as well - this may change with Docker 19.x:
-        - icalia-labs.registry-beta.semaphoreci.com/icalialabs/on_container:testing-${GIT_COMMIT_SHORT_SHA:-latest}
-        - icalia-labs.registry-beta.semaphoreci.com/icalialabs/on_container:testing-${TAG_SAFE_BRANCH}
-        - icalia-labs.registry-beta.semaphoreci.com/icalialabs/on_container:testing
-  
+        - docker.pkg.github.com/${GITHUB_REPOSITORY}/main:testing-${GIT_COMMIT_SHORT_SHA}
+        - docker.pkg.github.com/${GITHUB_REPOSITORY}/main:testing-${TAG_SAFE_BRANCH}
+        - docker.pkg.github.com/${GITHUB_REPOSITORY}/main:testing
+    command: rake spec
+    volumes:
+      - .:${PWD:-/code/on-container}
+
   release:
     <<: *lib
+    image: docker.pkg.github.com/${GITHUB_REPOSITORY}/main:${GIT_COMMIT_SHORT_SHA}
+    build:
+      <<: *lib_build
+      target: builder
     command: rake release
-    volumes:
-      - .:/usr/src
-      - ${HOME}/.gem/credentials:/root/.gem/credentials
+    volumes: []
+    environment:
+      GEM_HOST_API_KEY: ${GEM_HOST_API_KEY}
