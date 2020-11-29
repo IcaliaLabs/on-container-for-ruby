@@ -98,14 +98,11 @@ jobs:
       - name: Login to Github Package Registry for Docker
         run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download image cache for "release" stage image
-        run: docker-image-manager download-cache release
+      - name: Download image cache for "builder"
+        run: docker-image-manager download-cache builder
 
       - name: Build release
-        run: ci-compose build --pull --build-arg BUILDKIT_INLINE_CACHE=1 release
-        env:
-          COMPOSE_DOCKER_CLI_BUILD: 1
-          DOCKER_BUILDKIT: 1
+        run: ci-compose run builder
 
   publish_gem:
     name: Publish Gem
@@ -131,16 +128,10 @@ jobs:
       - name: Login to Github Package Registry for Docker
         run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download image cache for "release" stage image
+      - name: Download image cache for "release"
         run: docker-image-manager download-cache release
 
-      - name: Build release
-        run: ci-compose build --pull --build-arg BUILDKIT_INLINE_CACHE=1 release
-        env:
-          COMPOSE_DOCKER_CLI_BUILD: 1
-          DOCKER_BUILDKIT: 1
-
-      - name: Push release
+      - name: Publish release to rubygems
         run: ci-compose run release
         env:
           GEM_HOST_API_KEY: ${{ secrets.ICALIALABS_GEM_HOST_API_KEY }}
