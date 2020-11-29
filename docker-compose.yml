@@ -1,20 +1,6 @@
 version: '3.7'
 
-volumes:
-  lib_gem_bundle:
-
-services:
-  lib:
-    image: icalialabs/on_container:development
-    build:
-      context: .
-      target: development
-      args:
-        DEVELOPER_UID: ${UID:-1000}
-        DEVELOPER_USERNAME: ${USER:-you}
-    command: bundle console
-    volumes:
-      - .:/usr/src
-      - lib_gem_bundle:/usr/local/bundle
-    environment:
-      BUNDLE_CONSOLE: pry
+# This docker-compose configuration contents are blank on purpose.
+# Development services are located on the `docker-compose.override.yml` file.
+# This file should configure services shared across all docker-compose
+# environments.

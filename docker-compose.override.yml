@@ -1,0 +1,28 @@
+version: '3.7'
+
+volumes:
+  lib_gem_bundle:
+
+services:
+  lib:
+    image: icalialabs/on_container:development
+    build: &lib_build
+      context: .
+      target: development
+      args:
+        CODE_PATH: ${PWD:-/code/on-container}
+        DEVELOPER_UID: ${UID:-1000} # Keep in mind, most CI/CD environments will have this variable unset!
+        DEVELOPER_USERNAME: ${USER:-you}
+    command: bundle console
+    volumes:
+      - .:${PWD:-/code/on-container}
+      - lib_gem_bundle:/usr/local/bundle
+    environment:
+      BUNDLE_CONSOLE: pry
+
+  builder:
+    image: icalialabs/on_container:builder
+    build:
+      <<: *lib_build
+      target: builder
+    command: ash
