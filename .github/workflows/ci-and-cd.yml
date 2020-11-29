@@ -1,0 +1,106 @@
+name: CI & CD
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the master branch
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test_build:
+    name: Build Test Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.x'
+
+      - name: Add CI/CD scripts to system path
+        run: echo "${GITHUB_WORKSPACE}/.github/workflows/bin" >> $GITHUB_PATH
+
+      - name: Normalize env vars
+        run: normalize-env-vars >> $GITHUB_ENV
+
+      - name: Login to Github Package Registry for Docker
+        run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Test Image Cache
+        run: docker-image-manager download-cache tests
+
+      - name: Build Test Image
+        run: ci-compose build --pull --build-arg BUILDKIT_INLINE_CACHE=1 tests
+        env:
+          # Configures docker-compose to use Docker CLI to build the image:
+          COMPOSE_DOCKER_CLI_BUILD: 1
+          # Configures Docker CLI to use BuildKit to build the image:
+          DOCKER_BUILDKIT: 1
+
+      - name: Push Test Image
+        run: docker-image-manager tag-and-push tests
+
+  testing:
+    name: Testing
+    runs-on: ubuntu-latest
+    needs: [test_build]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.x'
+
+      - name: Add CI/CD scripts to system path
+        run: echo "${GITHUB_WORKSPACE}/.github/workflows/bin" >> $GITHUB_PATH
+
+      - name: Normalize env vars
+        run: normalize-env-vars >> $GITHUB_ENV
+
+      - name: Login to Github Package Registry for Docker
+        run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Test Image
+        run: ci-compose pull tests
+
+      - name: Run Tests
+        run: ci-compose run tests
+
+  release_build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    needs: [test_build]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.x'
+
+      - name: Add CI/CD scripts to system path
+        run: echo "${GITHUB_WORKSPACE}/.github/workflows/bin" >> $GITHUB_PATH
+
+      - name: Normalize env vars
+        run: normalize-env-vars >> $GITHUB_ENV
+
+      - name: Login to Github Package Registry for Docker
+        run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download image cache for "release" stage image
+        run: docker-image-manager download-cache release
+
+      - name: Build release
+        run: ci-compose build --pull --build-arg BUILDKIT_INLINE_CACHE=1 release
+        env:
+          COMPOSE_DOCKER_CLI_BUILD: 1
+          DOCKER_BUILDKIT: 1
