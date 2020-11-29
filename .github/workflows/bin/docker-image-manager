@@ -1,0 +1,114 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+def main_image
+  @main_image ||= @config.dig 'services', @service_name, 'image'
+end
+
+def image_repo
+  @image_repo ||= image_and_tag(main_image).first
+end
+
+def image_and_tag(image)
+  image.match(/\A(\S+):(\S*)\z/).captures
+end
+
+def pull(image)
+  system('docker', 'pull', image, out: $stdout, err: :out)
+end
+
+def service_image_cache_list(service_name)
+  list = @config.dig('services', service_name, 'build', 'cache_from') || []
+  list.reject { |image| image == main_image }.uniq
+end
+
+def pull_cache_images
+  repo_image_pulled = false
+
+  service_image_cache_list(@service_name).each do |image|
+    is_repo_image = image.start_with?(image_repo)
+    next if is_repo_image && repo_image_pulled
+
+    repo_image_pulled = pull(image) && is_repo_image
+  end
+end
+
+def push(image)
+  system 'docker', 'push', image, out: $stdout, err: :out
+end
+
+def tag(source_image, target_image)
+  system 'docker', 'tag', source_image, target_image, out: $stdout, err: :out
+end
+
+def tag_and_push_branch
+  branch_image = main_image
+    .gsub(ENV['GIT_COMMIT_SHORT_SHA'], ENV['TAG_SAFE_BRANCH'])
+
+  branch_image = branch_image[0..-8] if branch_image =~ /:(\w+)-master\z/
+
+  tag main_image, branch_image
+  push branch_image
+end
+
+def tag_and_push_latest
+  # We'll only tag 'testing', 'builder' or 'latest' if we're on master:
+  return unless ENV['TAG_SAFE_BRANCH'] == 'master'
+
+  latest_image = main_image.gsub(ENV['GIT_COMMIT_SHORT_SHA'], '')
+
+  if latest_image.end_with?('-')
+    # It's either a 'builder' or 'testing' tag:
+    latest_image = latest_image[0..-2]
+  elsif latest_image.end_with?(':')
+    # It's neither a 'builder' or 'testing' tag:
+    latest_image = "#{latest_image}latest"
+  end
+
+  tag main_image, latest_image
+  push latest_image
+end
+
+def push_images
+  push main_image
+  tag_and_push_branch
+  tag_and_push_latest
+end
+
+@command = ARGV[0]
+unless %w[download-cache tag-and-push].include?(@command)
+  puts "Command '#{@command}' not recognized"
+  exit 1
+end
+
+@service_name = ARGV[1]
+if "#{@service_name}" == ''
+  puts "No service name given"
+  exit 1
+end
+
+@config ||= begin
+  require 'yaml'
+
+  config = YAML.load %x[envsubst < ci-compose.yml]
+rescue
+  puts config
+  exit 1
+end
+
+if "#{@service_name}" == ''
+  puts "No service name given"
+  exit 1
+end
+
+if @config.dig('services', @service_name).nil?
+  puts "No service '#{@service_name}' exists in config"
+  exit 1
+end
+
+case @command
+when 'download-cache'
+  pull_cache_images
+when 'tag-and-push'
+  push_images
+end
