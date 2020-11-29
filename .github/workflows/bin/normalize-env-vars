@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'etc'
+
+git_sha = ENV['GITHUB_SHA']
+git_short_sha = git_sha[0..7]
+
+git_branch = (ENV['GITHUB_HEAD_REF'] || ENV['GITHUB_REF']).delete_prefix 'refs/heads/'
+docker_tag_name_from_branch = git_branch.split('/').reverse.join('-')
+
+build_date = Time.now.strftime('%Y-%m-%dT%H:%M:%S%z')
+
+# See https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
+
+puts "BUILD_DATE=#{build_date}"
+puts "GIT_COMMIT_SHA=#{git_sha}"
+puts "GIT_COMMIT_SHORT_SHA=#{git_short_sha}"
+puts "GIT_BRANCH=#{git_branch}"
+puts "TAG_SAFE_BRANCH=#{docker_tag_name_from_branch}"
+puts "UID=#{Etc.getpwuid.uid}"
