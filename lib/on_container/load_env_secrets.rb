@@ -39,11 +39,15 @@ url_keys.each do |url_key|
   next unless credential_keys.any?
 
   uri = URI(ENV[url_key])
-  username = URI.encode_www_form_component ENV[credential_keys.detect { |key| key =~ /USER/ }]
-  password = URI.encode_www_form_component ENV[credential_keys.detect { |key| key =~ /PASS/ }]
 
-  uri.user = username if username
-  uri.password = password if password
+  credential_keys.each do |credential_key|
+    credential_value = URI.encode_www_form_component ENV[credential_key]
+    case credential_key
+    when /USER/ then uri.user = credential_value
+    when /PASS/ then uri.password = credential_value
+    end
+  end
+
   ENV[url_key] = uri.to_s
 end
 
