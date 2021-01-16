@@ -157,9 +157,6 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Authorize Docker push
-        run: gcloud auth configure-docker
-
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
@@ -198,37 +195,41 @@ jobs:
       - name: Build Gem
         run: ci-compose run builder
 
+      # Persist the built gem for the next job to be able to publish it:
+      - name: Persist Built Gem
+        uses: actions/upload-artifact@v2
+        with:
+          name: built-gem
+          path: pkg
+          retention-days: 1
+
   publish_gem:
     name: Publish Gem
     runs-on: ubuntu-latest
     needs: [testing, release_build]
-    if: github.event_name == 'release'
+    # if: github.event_name == 'release'
     env:
       GEM_HOST_API_KEY: ${{ secrets.ICALIALABS_GEM_HOST_API_KEY }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v1
-
-      - name: Setup Ruby
-        uses: actions/setup-ruby@v1
+      - name: Restore Built Gem
+        uses: actions/download-artifact@v2
         with:
-          ruby-version: '2.x'
+          name: built-gem
 
-      - name: Add CI/CD scripts to system path
-        run: echo "${GITHUB_WORKSPACE}/.github/workflows/bin" >> $GITHUB_PATH
+      # - name: Setup Ruby
+      #   uses: actions/setup-ruby@v1
+      #   with:
+      #     ruby-version: '2.x'
 
-      - name: Normalize env vars
-        run: normalize-env-vars >> $GITHUB_ENV
+      - name: Check ruby version
+        run: ruby -v
 
-      - name: Login to Github Package Registry for Docker
-        run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+      - name: Check workspace contents
+        run: ls -lah
 
-      - name: Check ci-compose config
-        run: ci-compose config
+      - name: Check pkg contents
+        run: ls -lah pkg
 
-      - name: Download image cache for "release"
-        run: docker-image-manager download-cache release
-
-      - name: Publish release to rubygems
-        run: ci-compose run release
+      - name: Try to publish
+        run: gem push pkg/on_container*.gem
         
