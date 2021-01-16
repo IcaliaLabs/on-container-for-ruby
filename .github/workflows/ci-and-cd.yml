@@ -211,6 +211,17 @@ jobs:
     env:
       GEM_HOST_API_KEY: ${{ secrets.ICALIALABS_GEM_HOST_API_KEY }}
     steps:
+      - name: Check Ruby version
+        run: ruby -v
+
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.7'
+
+      - name: Check Ruby version
+        run: ruby -v
+
       - name: Restore Built Gem
         uses: actions/download-artifact@v2
         with:
