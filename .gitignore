@@ -19,3 +19,6 @@
 # Ignore dotenv files:
 **/*.env
 !**/*example*.env
+
+# Ignore local google cloud credentials
+**/google-cloud-credentials.json
