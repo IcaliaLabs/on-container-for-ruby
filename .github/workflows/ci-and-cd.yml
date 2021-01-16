@@ -216,20 +216,6 @@ jobs:
         with:
           name: built-gem
 
-      # - name: Setup Ruby
-      #   uses: actions/setup-ruby@v1
-      #   with:
-      #     ruby-version: '2.x'
-
-      - name: Check ruby version
-        run: ruby -v
-
-      - name: Check workspace contents
-        run: ls -lah
-
-      - name: Check pkg contents
-        run: ls -lah pkg
-
       - name: Try to publish
-        run: gem push pkg/on_container*.gem
+        run: gem push on_container*.gem
         
