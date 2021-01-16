@@ -34,15 +34,15 @@ def tag_and_push_branch
   branch_image = main_image
     .gsub(ENV['GIT_COMMIT_SHORT_SHA'], ENV['TAG_SAFE_BRANCH'])
 
-  branch_image = branch_image[0..-8] if branch_image =~ /:(\w+)-master\z/
+  branch_image = branch_image[0..-8] if branch_image =~ /:(\w+)-main\z/
 
   tag main_image, branch_image
   push branch_image
 end
 
 def tag_and_push_latest
-  # We'll only tag 'testing', 'builder' or 'latest' if we're on master:
-  return unless ENV['TAG_SAFE_BRANCH'] == 'master'
+  # We'll only tag 'testing', 'builder' or 'latest' if we're on main:
+  return unless ENV['TAG_SAFE_BRANCH'] == 'main'
 
   latest_image = main_image.gsub(ENV['GIT_COMMIT_SHORT_SHA'], '')
 
