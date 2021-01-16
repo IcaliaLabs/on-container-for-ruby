@@ -2,11 +2,12 @@
 # This stage will contain the minimal dependencies for the CI/CD environment to
 # run the test suite:
 
-# Use the official Ruby 2.7.2 alpine image as base:
-FROM ruby:2.7.2-alpine AS testing
+# Use the official Ruby 2.7.1 Slim Buster image as base:
+FROM ruby:2.7.2-slim-buster AS testing
 
 # Install the app build system dependency packages:
-RUN apk add --no-cache alpine-sdk git
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential git
 
 # Receive the app path as an argument:
 ARG CODE_PATH=/code/on-container
@@ -16,9 +17,9 @@ ARG DEVELOPER_UID=1000
 ARG DEVELOPER_USERNAME=you
 
 # Replicate the developer user in the development image:
-RUN addgroup -g ${DEVELOPER_UID} ${DEVELOPER_USERNAME} \
-  ; adduser -D -u ${DEVELOPER_UID} -G ${DEVELOPER_USERNAME} \
-    -s /bin/ash -g "Developer User,,," ${DEVELOPER_USERNAME}
+RUN addgroup --gid ${DEVELOPER_UID} ${DEVELOPER_USERNAME} \
+ ;  useradd -r -m -u ${DEVELOPER_UID} --gid ${DEVELOPER_UID} \
+    --shell /bin/bash -c "Developer User,,," ${DEVELOPER_USERNAME}
 
 # Ensure the developer user's home directory and APP_PATH are owned by him/her:
 # (A workaround to a side effect of setting WORKDIR before creating the user)
@@ -55,8 +56,12 @@ FROM testing AS development
 # Change to root user to install the development packages:
 USER root
 
-# Install sudo, which is commonly used at development phase:
-RUN apk add --no-cache sudo
+# Install sudo, along with any other tool required at development phase:
+RUN apt-get install -y --no-install-recommends \
+  # Vim will be used to edit files when inside the container (git, etc):
+  vim \
+  # Sudo will be used to install/configure system stuff if needed during dev:
+  sudo
 
 # Receive the developer username - note that ARGS won't persist between stages
 # on non-buildkit builds:
