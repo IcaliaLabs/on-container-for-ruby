@@ -2,13 +2,13 @@ name: CI & CD
 
 on:
   # Trigger the workflow on push or pull request,
-  # but only for the master branch
+  # but only for the main branch
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
   release:
     types: [published]
 
@@ -26,28 +26,47 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v1
 
-      - name: Setup Ruby
-        uses: actions/setup-ruby@v1
-        with:
-          ruby-version: '2.x'
-
       - name: Add CI/CD scripts to system path
         run: echo "${GITHUB_WORKSPACE}/.github/workflows/bin" >> $GITHUB_PATH
 
       - name: Normalize env vars
         run: normalize-env-vars >> $GITHUB_ENV
 
-      - name: Login to Github Package Registry for Docker
-        run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
 
-      - name: Pull Test Image Cache
-        run: docker-image-manager download-cache tests
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-cache-${{ env.GIT_BRANCH }}-${{ github.sha }}
+          restore-keys: |
+            buildx-cache-${{ env.GIT_BRANCH }}-
+            buildx-cache-main-
+            buildx-cache-
 
-      - name: Build Test Image
-        run: ci-compose build --pull --build-arg BUILDKIT_INLINE_CACHE=1 tests
+      - name: Build Image
+        id: build_test_image
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: ./Dockerfile
+          target: testing
 
-      - name: Push Test Image
-        run: docker-image-manager tag-and-push tests
+          platforms: linux/amd64
+          
+          tags: |
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-${{ env.GIT_COMMIT_SHORT_SHA }}
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-${{ env.TAG_SAFE_BRANCH }}
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          build-args: |
+            CODE_PATH=${{env.PWD}}
+            DEVELOPER_UID=${{env.UID}}
+            DEVELOPER_USERNAME=${{env.USER}}
 
   testing:
     name: Testing
@@ -57,22 +76,50 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v1
 
-      - name: Setup Ruby
-        uses: actions/setup-ruby@v1
-        with:
-          ruby-version: '2.x'
-
       - name: Add CI/CD scripts to system path
         run: echo "${GITHUB_WORKSPACE}/.github/workflows/bin" >> $GITHUB_PATH
 
       - name: Normalize env vars
         run: normalize-env-vars >> $GITHUB_ENV
 
-      - name: Login to Github Package Registry for Docker
-        run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
 
-      - name: Pull Test Image
-        run: ci-compose pull tests
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-cache-${{ env.GIT_BRANCH }}-${{ github.sha }}
+          restore-keys: |
+            buildx-cache-${{ env.GIT_BRANCH }}-
+            buildx-cache-main-
+            buildx-cache-
+
+      - name: Load Testing Image
+        id: load_test_image
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: ./Dockerfile
+          target: testing
+          push: false
+
+          # Make the build result to be available in the Docker client:
+          load: true
+
+          platforms: linux/amd64
+          tags: |
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-${{ env.GIT_COMMIT_SHORT_SHA }}
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-${{ env.TAG_SAFE_BRANCH }}
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          build-args: |
+            CODE_PATH=${{env.PWD}}
+            DEVELOPER_UID=${{env.UID}}
+            DEVELOPER_USERNAME=${{env.USER}}
 
       - name: Run Tests
         run: ci-compose run tests
@@ -85,25 +132,61 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v1
 
-      - name: Setup Ruby
-        uses: actions/setup-ruby@v1
-        with:
-          ruby-version: '2.x'
-
       - name: Add CI/CD scripts to system path
         run: echo "${GITHUB_WORKSPACE}/.github/workflows/bin" >> $GITHUB_PATH
 
       - name: Normalize env vars
         run: normalize-env-vars >> $GITHUB_ENV
 
-      - name: Login to Github Package Registry for Docker
-        run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
 
-      - name: Download image cache for "builder"
-        run: docker-image-manager download-cache builder
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-cache-${{ env.GIT_BRANCH }}-${{ github.sha }}
+          restore-keys: |
+            buildx-cache-${{ env.GIT_BRANCH }}-
+            buildx-cache-main-
+            buildx-cache-
 
-      - name: Build release
+      - name: Load Testing Image
+        id: load_test_image
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: ./Dockerfile
+          target: testing
+          push: false
+
+          # Make the build result to be available in the Docker client:
+          load: true
+
+          platforms: linux/amd64
+          tags: |
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-${{ env.GIT_COMMIT_SHORT_SHA }}
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-${{ env.TAG_SAFE_BRANCH }}
+            ${{ env.DOCKER_NAMESPACE }}/on-container-for-ruby:testing-latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          build-args: |
+            CODE_PATH=${{env.PWD}}
+            DEVELOPER_UID=${{env.UID}}
+            DEVELOPER_USERNAME=${{env.USER}}
+
+      - name: Build Gem
         run: ci-compose run builder
+
+      # Persist the built gem for the next job to be able to publish it:
+      - name: Persist Built Gem
+        uses: actions/upload-artifact@v2
+        with:
+          name: built-gem
+          path: pkg
+          retention-days: 1
 
   publish_gem:
     name: Publish Gem
@@ -113,29 +196,19 @@ jobs:
     env:
       GEM_HOST_API_KEY: ${{ secrets.ICALIALABS_GEM_HOST_API_KEY }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v1
-
+      # Using the GEM_HOST_API_KEY env var to authenticate with Rubygems
+      # seems to work only on rubygems version 3.1 onwards... which is included
+      # in ruby 2.7.x:
       - name: Setup Ruby
         uses: actions/setup-ruby@v1
         with:
-          ruby-version: '2.x'
+          ruby-version: '2.7'
 
-      - name: Add CI/CD scripts to system path
-        run: echo "${GITHUB_WORKSPACE}/.github/workflows/bin" >> $GITHUB_PATH
+      - name: Restore Built Gem
+        uses: actions/download-artifact@v2
+        with:
+          name: built-gem
 
-      - name: Normalize env vars
-        run: normalize-env-vars >> $GITHUB_ENV
-
-      - name: Login to Github Package Registry for Docker
-        run: docker login docker.pkg.github.com -u ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check ci-compose config
-        run: ci-compose config
-
-      - name: Download image cache for "release"
-        run: docker-image-manager download-cache release
-
-      - name: Publish release to rubygems
-        run: ci-compose run release
+      - name: Try to publish
+        run: gem push on_container*.gem
         
