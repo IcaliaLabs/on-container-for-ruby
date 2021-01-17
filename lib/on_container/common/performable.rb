@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
-require "active_support/concern"
-require "on_container/common/safe_performable"
-
 module OnContainer
   module Common
     module Performable
-      extend ActiveSupport::Concern
+      def self.included(base)
+        base.extend ClassMethods
+      end
 
-      class_methods do
+      module ClassMethods
         def perform!(*args, **kargs)
           new(*args, **kargs).perform!
         end
