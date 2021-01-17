@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require "on_container/secrets/google_cloud/service_base"
+require 'yaml'
+require 'on_container/secrets/google_cloud/service_base'
 
 module OnContainer
   module Secrets
