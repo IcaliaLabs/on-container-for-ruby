@@ -19,7 +19,7 @@ module OnContainer
         end
     
         def secret_manager?
-          defined?(Google::Cloud::SecretManager)
+          defined?(Google::Cloud::SecretManager) == 'constant'
         end
     
         def perform!
