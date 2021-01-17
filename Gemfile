@@ -8,3 +8,6 @@ gem "rspec", "~> 3.0"
 
 gem 'byebug'
 gem 'pry-byebug'
+
+gem 'google-cloud-secret_manager'
+gem 'climate_control', '~> 0.2.0'

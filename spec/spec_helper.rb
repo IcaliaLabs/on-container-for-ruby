@@ -1,5 +1,6 @@
 require "bundler/setup"
 require "on_container"
+require "climate_control"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

@@ -52,7 +52,7 @@ end if command_requires_setup?
 execute_given_or_default_command
 ```
 
-### Loading secrets into environment variables, and inserting credentials into URL environment variables
+### Loading secrets into environment variables
 
 When using Docker Swarm, the secrets are loaded as files mounted into the container's filesystem.
 
@@ -65,11 +65,58 @@ For our Rails example app, we added the following line to the `config/boot.rb` f
 
 ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
 
-require 'on_container/load_env_secrets' # Load secrets injected by Kubernetes/Swarm
-
 require 'bundler/setup' # Set up gems listed in the Gemfile.
 require 'bootsnap/setup' # Speed up boot time by caching expensive operations.
+
+# Load swarm/gcp secrets to ENV:
+require 'on_container/load_env_secrets'
 ```
+
+#### Loading Google Cloud Secret Manager secrets into ENV
+
+If you require loading YAML data stored at [Google Cloud Secret Manager](https://cloud.google.com/secret-manager),
+you will require the following steps:
+
+1. Install the `google-cloud-secret_manager` gem
+
+On your gemfile:
+
+```ruby
+# Read secrets from Google Cloud Secret Manager
+gem 'google-cloud-secret_manager', '~> 1.0'
+```
+
+2. Require it at `config/boot.rb`
+
+On `config/boot`, right before requiring `on_container/load_env_secrets`:
+
+```ruby
+# Require Google Cloud Secret Manager to enable 'on_container/load_env_secrets'
+# loading secrets from GCP to ENV:
+require 'google/cloud/secret_manager'
+
+# Load swarm/gcp secrets to ENV:
+require 'on_container/load_env_secrets'
+```
+
+3. Make sure your app has google cloud credentials configured, and have access
+to the secrets your'e planning to use.
+
+4. Configure any number of environment variables ending with
+`_GOOGLE_CLOUD_SECRET`, each containing the secret you want to load. In the
+following example, the command to deploy an image into Google Cloud Run:
+
+```bash
+gcloud run deploy my-demo-app \
+  --platform "managed" \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars A_GOOGLE_CLOUD_SECRET=my-super-secret \
+  --set-env-vars ANOTHER_GOOGLE_CLOUD_SECRET=project/another-project/secrets/another-secret/versions/1 \
+  --service-account=my-demo-service-account@google-cloud \
+  --image gcr.io/my-demo-project/my-demo-app:latest
+```
+#### Inserting credentials into URL environment variables
 
 The `on_container/load_env_secrets` also merges any credential available in environment variables into any matching
 `_URL` environment variable. For example, consider the following environment variables:

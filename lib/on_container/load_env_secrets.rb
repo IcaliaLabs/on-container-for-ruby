@@ -6,6 +6,10 @@
 require 'active_support'
 require 'active_support/core_ext/object'
 
+# Load secrets from Google Cloud Secret Manager to ENV, if any:
+require 'on_container/secrets/google_cloud/env_loader'
+OnContainer::Secrets::GoogleCloud::EnvLoader.perform!
+
 # Process only a known list of env vars that can filled by reading a file (i.e.
 # a docker secret):
 Dir["#{ENV.fetch('SECRETS_PATH', '/run/secrets/')}*"].each do |secret_filepath|
