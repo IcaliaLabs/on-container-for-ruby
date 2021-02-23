@@ -39,7 +39,7 @@ require 'uri' if (url_keys = ENV.keys.select { |key| key =~ /_URL/ }).any?
 url_keys.each do |url_key|
   credential_pattern_string = url_key.gsub('_URL', '_(USER(NAME)?|PASS(WORD)?)')
   credential_pattern = Regexp.new "\\A#{credential_pattern_string}\\z"
-  credential_keys = ENV.keys.select { |key| key =~ credential_pattern }
+  credential_keys = ENV.keys.select { |key| key =~ credential_pattern }.sort.reverse
   next unless credential_keys.any?
 
   uri = URI(ENV[url_key])
