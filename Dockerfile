@@ -64,6 +64,8 @@ RUN apt-get install -y --no-install-recommends \
   # VSCode devcontainer:
   gpg \
   gpgconf \
+  # Make ssh work in container (still need to figure out how to forward agent):
+  openssh-client \
   # Vim will be used to edit files when inside the container (git, etc):
   vim \
   # Sudo will be used to install/configure system stuff if needed during dev:
