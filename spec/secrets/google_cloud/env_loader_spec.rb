@@ -1,17 +1,9 @@
 
 require 'on_container/secrets/google_cloud/env_loader'
 
-RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader do
-  def with_modified_env(options, &block)
-    ClimateControl.modify(options, &block)
-  end
-
+RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader, type: :env_spec do
   shared_context 'ENV with vars ending with "_GOOGLE_CLOUD_SECRET"' do
-    let(:test_env_vars) { { FOO_GOOGLE_CLOUD_SECRET: 'foo' } }
-
-    around do |example|
-      with_modified_env(test_env_vars) { example.run }
-    end
+    let(:example_env_vars) { { FOO_GOOGLE_CLOUD_SECRET: 'foo' } }
   end
 
   shared_context 'Google::Cloud::SecretManager is loaded' do
@@ -45,7 +37,7 @@ RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader do
       include_context 'ENV with vars ending with "_GOOGLE_CLOUD_SECRET"'
 
       it 'contains the env var name' do
-        expect(subject.env_keys).to include(*test_env_vars.keys.map(&:to_s))
+        expect(subject.env_keys).to include(*example_env_vars.keys.map(&:to_s))
       end
     end
   end

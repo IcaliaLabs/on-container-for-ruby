@@ -1,26 +1,14 @@
 
 require 'on_container/secrets/mounted_files/env_loader'
 
-RSpec.describe OnContainer::Secrets::MountedFiles::EnvLoader do
-  def with_modified_env(options, &block)
-    keys_before_example = ENV.keys + %w[LINES COLUMNS]
-    ClimateControl.modify(options, &block)
-    (ENV.keys - keys_before_example).each { |added_key| ENV.delete added_key }
-  end
-
+RSpec.describe OnContainer::Secrets::MountedFiles::EnvLoader, type: :env_spec do
   let :example_secrets_path do
     rel_path = File.join '..', '..', 'fixtures', 'mounted_secret_files'
     File.expand_path rel_path, __dir__
   end
 
-  let(:test_env_vars) { {} }
-
-  around do |example|
-    with_modified_env(test_env_vars) { example.run }
-  end
-
   shared_context 'with "SECRETS_PATH" set up' do
-    let(:test_env_vars) { { SECRETS_PATH: example_secrets_path } }
+    let(:example_env_vars) { { SECRETS_PATH: example_secrets_path } }
   end
 
   describe '#secrets_path' do
