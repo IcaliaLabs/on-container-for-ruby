@@ -60,6 +60,23 @@ RSpec.describe OnContainer::Secrets::UrlVariableProcessor, type: :env_spec do
           .from('https://example.com')
           .to 'https://example-user:example-pass@example.com'
       end
+
+      context 'with "*_PASS" processed before "*_USER" (is it possible?)' do
+        let :example_env_vars do
+          {
+            EXAMPLE_PASS: 'example-pass',
+            EXAMPLE_USER: 'example-user',
+            EXAMPLE_URL: 'https://example.com'
+          }
+        end
+
+        it 'adds the matching credentials to the "*_URL" env var' do
+          expect { subject.perform! }
+            .to change { ENV['EXAMPLE_URL'] }
+            .from('https://example.com')
+            .to 'https://example-user:example-pass@example.com'
+        end
+      end
     end
   end
 end
