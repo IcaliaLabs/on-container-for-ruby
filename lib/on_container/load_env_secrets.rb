@@ -3,26 +3,14 @@
 # Reads the specified secret paths (i.e. Docker Secrets) into environment
 # variables:
 
-require 'active_support'
-require 'active_support/core_ext/object'
-
 # Load secrets from Google Cloud Secret Manager to ENV, if any:
 require 'on_container/secrets/google_cloud/env_loader'
 OnContainer::Secrets::GoogleCloud::EnvLoader.perform!
 
 # Process only a known list of env vars that can filled by reading a file (i.e.
 # a docker secret):
-Dir["#{ENV.fetch('SECRETS_PATH', '/run/secrets')}/**/*"].map do |path|
-  Pathname.new(path)
-end.select(&:file?).each do |secret_filepath|
-  secret_envvarname = secret_filepath.basename('.*').to_s.upcase
-
-  # Skip if variable is already set - already-set variables have precedence over
-  # the secret files:
-  next if ENV.key?(secret_envvarname) && ENV[secret_envvarname].present?
-
-  ENV[secret_envvarname] = File.read(secret_filepath).strip
-end
+require 'on_container/secrets/mounted_files/env_loader'
+OnContainer::Secrets::MountedFiles::EnvLoader.perform!
 
 # For each *_URL environment variable where there's also a *_(USER|USERNAME) or
 # *_(PASS|PASSWORD), update the URL environment variable with the given
