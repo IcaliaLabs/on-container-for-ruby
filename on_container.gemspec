@@ -24,5 +24,6 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.require_paths = ['lib']
 
+  spec.add_runtime_dependency 'activesupport', '>= 4'
   spec.add_development_dependency 'bundler', '~> 2.1'
 end
