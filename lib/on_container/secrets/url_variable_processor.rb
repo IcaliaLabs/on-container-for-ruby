@@ -55,7 +55,8 @@ module OnContainer
 
         uri = URI(ENV[url_key])
 
-        credential_keys.each do |credential_key|
+        # Reverse sorting will place "*_USER" before "*_PASS":
+        credential_keys.sort.reverse.each do |credential_key|
           credential_value = URI.encode_www_form_component ENV[credential_key]
           case credential_key
           when /USER/ then uri.user = credential_value
