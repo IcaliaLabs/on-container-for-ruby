@@ -55,6 +55,22 @@ RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader, type: :env_spec do
     end
   end
 
+  describe '.secret_manager?' do
+    context 'without Google::Cloud::SecretManager loaded' do
+      it 'returns false' do
+        expect(subject).not_to be_secret_manager
+      end
+    end
+
+    context 'with Google::Cloud::SecretManager loaded' do
+      include_context 'with Google::Cloud::SecretManager loaded'
+
+      it 'returns true' do
+        expect(subject).to be_secret_manager
+      end
+    end
+  end
+
   describe '#perform!' do
     let(:fetcher_class) { OnContainer::Secrets::GoogleCloud::Fetcher }
     

@@ -1,26 +1,12 @@
 # frozen_string_literal: true
 
-# Reads the specified secret paths (i.e. Docker Secrets) into environment
-# variables:
-
-# Load secrets from Google Cloud Secret Manager to ENV, if any:
-require 'on_container/secrets/google_cloud/env_loader'
-OnContainer::Secrets::GoogleCloud::EnvLoader.perform!
-
-# Process only a known list of env vars that can filled by reading a file (i.e.
-# a docker secret):
-require 'on_container/secrets/mounted_files/env_loader'
-OnContainer::Secrets::MountedFiles::EnvLoader.perform!
-
-# For each *_URL environment variable where there's also a *_(USER|USERNAME) or
-# *_(PASS|PASSWORD), update the URL environment variable with the given
-# credentials. For example:
+# This script achieves a list of secret loading & processing:
 #
-# DATABASE_URL: postgres://postgres:5432/demo_production
-# DATABASE_USERNAME: lalito
-# DATABASE_PASSWORD: lepass
+# 1. Loads secrets from Google Cloud Secret Manager to ENV, if configured.
+# 2. Reads files in a configured Folder, and loads them into ENV variables.
+# 3. Processes "*_URL" env vars, adding their respective "*_USER" and "*_PASS".
 #
-# Results in the following updated DATABASE_URL:
-#  DATABASE_URL = postgres://lalito:lepass@postgres:5432/demo_production
-require 'on_container/secrets/url_variable_processor'
-OnContainer::Secrets::UrlVariableProcessor.perform!
+# - See https://github.com/IcaliaLabs/on-container-for-ruby#loading-secrets-into-environment-variables
+
+require 'on_container/secrets/env_loader'
+OnContainer::Secrets::EnvLoader.perform!

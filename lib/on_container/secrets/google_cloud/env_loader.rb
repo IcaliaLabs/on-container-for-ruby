@@ -17,9 +17,13 @@ module OnContainer
         def env_keys?
           env_keys.any?
         end
+
+        def self.secret_manager?
+          defined?(Google::Cloud::SecretManager) == 'constant'
+        end
     
         def secret_manager?
-          defined?(Google::Cloud::SecretManager) == 'constant'
+          self.class.secret_manager?
         end
     
         def perform!
