@@ -58,6 +58,12 @@ USER root
 
 # Install sudo, along with any other tool required at development phase:
 RUN apt-get install -y --no-install-recommends \
+  # Adding bash autocompletion as git without autocomplete is a pain...
+  bash-completion \
+  # gpg & gpgconf is used to get Git Commit GPG Signatures working inside the 
+  # VSCode devcontainer:
+  gpg \
+  gpgconf \
   # Vim will be used to edit files when inside the container (git, etc):
   vim \
   # Sudo will be used to install/configure system stuff if needed during dev:
