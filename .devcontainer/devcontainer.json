@@ -1,0 +1,49 @@
+// See https://code.visualstudio.com/docs/remote/containers#_devcontainerjson-reference
+{
+  // Docker Compose ============================================================
+
+  // Required. Path or an ordered list of paths to Docker Compose files relative
+  // to the devcontainer.json file. Using an array is useful when extending your
+  // Docker Compose configuration. The order of the array matters since the
+  // contents of later files can override values set in previous ones.
+  "dockerComposeFile": [
+    "../docker-compose.yml", // The compose file with the common services
+    "vs-compose.yml"     // Special for the VSCode dev container
+  ],
+
+  // Required. The name of the service VS Code should connect to once running.
+  "service": "on_container",
+
+  // Sets the default path that VS Code should open when connecting to the
+  // container (which is often the path to a volume mount where the source code
+  // can be found in the container).
+  "workspaceFolder": "${localWorkspaceFolder}",
+
+  // Indicates whether VS Code should stop the containers when the VS Code
+  // window is closed / shut down.
+  // Values are none and stopCompose (default).
+  "shutdownAction": "stopCompose",
+
+  // General ===================================================================
+
+  // A display name for the container.
+  "name": "On Container for Ruby",
+
+  // An array of extension IDs that specify the extensions to install inside the
+  // container when you first attach to it.
+  "extensions": [
+    // Integrates ESLint into VS Code:
+    "dbaeumer.vscode-eslint",
+
+    // Provides enhanced Ruby language and debugging support for Visual Studio
+    // Code:
+    "rebornix.ruby",
+
+    // A language server that provides intellisense, code completion, and inline
+    // documentation for Ruby:
+    "castwide.solargraph",
+
+    // Search modules, class and methods in ruby files using vscode go to symbol:
+    "miguel-savignano.ruby-symbols"
+  ]
+}

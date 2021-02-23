@@ -1,0 +1,15 @@
+{
+  "editor.formatOnSave": false,
+  "editor.rulers": [80,120],
+  "editor.tabSize": 2,
+  "[ruby]": {
+    "editor.tabSize": 2
+  },
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+  },
+  "solargraph.autoformat": true,
+  "solargraph.diagnostics": true,
+  "solargraph.formatting": true,
+  "solargraph.useBundler": true
+}
