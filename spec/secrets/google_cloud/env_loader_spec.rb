@@ -1,37 +1,10 @@
 
 require 'on_container/secrets/google_cloud/env_loader'
+require_relative '../shared/contexts/with_google_secret_manager'
 
-RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader do
-  def with_modified_env(options, &block)
-    ClimateControl.modify(options, &block)
-  end
-
+RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader, type: :env_spec do
   shared_context 'ENV with vars ending with "_GOOGLE_CLOUD_SECRET"' do
-    let(:test_env_vars) { { FOO_GOOGLE_CLOUD_SECRET: 'foo' } }
-
-    around do |example|
-      with_modified_env(test_env_vars) { example.run }
-    end
-  end
-
-  shared_context 'Google::Cloud::SecretManager is loaded' do
-    around do |example|
-      module ::Google
-        module Cloud
-          module SecretManager
-            def self.secret_manager_service
-              'bar'
-            end
-          end
-        end
-      end
-  
-      example.run
-      
-      Google::Cloud.send(:remove_const, :SecretManager)
-      Google.send(:remove_const, :Cloud)
-      Object.send(:remove_const, :Google)
-    end
+    let(:example_env_vars) { { FOO_GOOGLE_CLOUD_SECRET: 'foo' } }
   end
 
   describe '#env_keys' do
@@ -45,7 +18,7 @@ RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader do
       include_context 'ENV with vars ending with "_GOOGLE_CLOUD_SECRET"'
 
       it 'contains the env var name' do
-        expect(subject.env_keys).to include(*test_env_vars.keys.map(&:to_s))
+        expect(subject.env_keys).to include(*example_env_vars.keys.map(&:to_s))
       end
     end
   end
@@ -73,11 +46,27 @@ RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader do
       end
     end
 
-    context 'when Google::Cloud::SecretManager is loaded' do
-      include_context 'Google::Cloud::SecretManager is loaded'
+    context 'with Google::Cloud::SecretManager loaded' do
+      include_context 'with Google::Cloud::SecretManager loaded'
 
       it 'returns true' do
         expect(subject.env_keys?).to be false
+      end
+    end
+  end
+
+  describe '.secret_manager?' do
+    context 'without Google::Cloud::SecretManager loaded' do
+      it 'returns false' do
+        expect(subject).not_to be_secret_manager
+      end
+    end
+
+    context 'with Google::Cloud::SecretManager loaded' do
+      include_context 'with Google::Cloud::SecretManager loaded'
+
+      it 'returns true' do
+        expect(subject).to be_secret_manager
       end
     end
   end
@@ -93,8 +82,8 @@ RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader do
         end
       end
 
-      context 'when Google::Cloud::SecretManager is loaded' do
-        include_context 'Google::Cloud::SecretManager is loaded'
+      context 'with Google::Cloud::SecretManager loaded' do
+        include_context 'with Google::Cloud::SecretManager loaded'
 
         it 'does not call the fetcher' do
           expect(fetcher_class).not_to receive(:perform!)
@@ -113,8 +102,9 @@ RSpec.describe OnContainer::Secrets::GoogleCloud::EnvLoader do
         end
       end
 
-      context 'when Google::Cloud::SecretManager is loaded' do
-        include_context 'Google::Cloud::SecretManager is loaded'
+      context 'with Google::Cloud::SecretManager loaded' do
+        include_context 'with Google::Cloud::SecretManager loaded'
+
         let(:test_secret_data) { { 'UNO' => 'ONE' } }
 
         it 'merges the fetched data to ENV' do
