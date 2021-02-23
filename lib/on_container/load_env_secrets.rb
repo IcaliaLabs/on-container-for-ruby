@@ -12,7 +12,7 @@ OnContainer::Secrets::GoogleCloud::EnvLoader.perform!
 
 # Process only a known list of env vars that can filled by reading a file (i.e.
 # a docker secret):
-Dir["#{ENV.fetch('SECRETS_PATH', '/run/secrets/')}*"].each do |secret_filepath|
+Dir["#{ENV.fetch('SECRETS_PATH', '/run/secrets')}/*"].each do |secret_filepath|
   next unless File.file?(secret_filepath)
 
   secret_envvarname = File.basename(secret_filepath, '.*').upcase
