@@ -42,6 +42,12 @@ module OnContainer
           rails rspec sidekiq hutch puma rake webpack webpack-dev-server
         ].include?(ARGV[0])
       end
+      
+      def command_might_require_database?
+        %w[
+          rails rspec sidekiq hutch puma rake
+        ].include?(ARGV[0])
+      end
     end
   end
 end
