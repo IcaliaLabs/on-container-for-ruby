@@ -6,9 +6,13 @@ module OnContainer
       def remove_rails_pidfile
         system "rm -rf #{File.expand_path('tmp/pids/server.pid')}"
       end
+
+      def rails?
+        ARGV[0] == 'rails'
+      end
       
       def rails_server?
-        ARGV[0] == 'rails' && %w[server s].include?(ARGV[1])
+        rails? && %w[server s].include?(ARGV[1])
       end
     end
   end
