@@ -13,7 +13,8 @@ module OnContainer
         require 'yaml'
 
         database_yaml = Pathname.new File.expand_path('config/database.yml')
-        loaded_yaml = YAML.safe_load(ERB.new(database_yaml.read).result, aliases: true) || {}
+        database_config = ERB.new(database_yaml.read).result
+        loaded_yaml = YAML.safe_load(database_config, aliases: true) || {}
         shared = loaded_yaml.delete('shared')
       
         loaded_yaml.each { |_k, values| values.reverse_merge!(shared) } if shared
