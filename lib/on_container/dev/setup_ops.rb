@@ -5,7 +5,7 @@ module OnContainer
     module SetupOps
       APP_PATH = File.expand_path '.'
       TRUEISH_VALUES = %w[true True TRUE yes Yes YES].freeze
-      SKIP_SETUP_ENV_VAR = 'ON_CONTAINER_SKIP_SETUP_LOCK'
+      SKIP_SETUP_ENV_VAR = 'ON_CONTAINER_SKIP_SETUP_LOCK'.freeze
 
       def app_temp_path
         "#{APP_PATH}/tmp"
@@ -44,7 +44,6 @@ module OnContainer
         end
 
         yield
-
       ensure
         unlock_setup
       end
