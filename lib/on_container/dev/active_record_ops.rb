@@ -11,39 +11,40 @@ module OnContainer
       def parse_activerecord_config_file
         require 'erb'
         require 'yaml'
+        require 'pg'
 
         database_yaml = Pathname.new File.expand_path('config/database.yml')
         database_config = ERB.new(database_yaml.read).result
         loaded_yaml = YAML.safe_load(database_config, aliases: true) || {}
         shared = loaded_yaml.delete('shared')
-      
+
         loaded_yaml.each { |_k, values| values.reverse_merge!(shared) } if shared
         Hash.new(shared).merge(loaded_yaml)
       end
-      
+
       def activerecord_config
-        @activerecord_config ||= parse_activerecord_config_file 
+        @activerecord_config ||= parse_activerecord_config_file
           .fetch ENV.fetch('RAILS_ENV', 'development')
       end
-      
+
       def establish_activerecord_database_connection
         require 'active_record' unless defined?(ActiveRecord)
         ActiveRecord::Base.establish_connection activerecord_config
         ActiveRecord::Base.connection_pool.with_connection { |connection| }
       end
-      
+
       def activerecord_database_initialized?
         ActiveRecord::Base.connection_pool.with_connection do |connection|
           connection.data_source_exists? :schema_migrations
         end
       end
-      
+
       def activerecord_database_ready?
         connection_tries ||= 3
 
         establish_activerecord_database_connection
         activerecord_database_initialized?
-      
+
       rescue PG::ConnectionBad
         unless (connection_tries -= 1).zero?
           puts "Retrying DB connection #{connection_tries} more times..."
@@ -51,15 +52,14 @@ module OnContainer
           retry
         end
         false
-      
+
       rescue ActiveRecord::NoDatabaseError
         false
       end
-      
+
       def setup_activerecord_database
         system 'rails db:setup'
       end
     end
   end
 end
-
